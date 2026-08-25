@@ -106,7 +106,7 @@ export default async function GridPage({
       {hiddenCount > 0 && (
         <p className="mb-4 rounded border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-400">
           {hiddenCount} {hiddenCount === 1 ? "game is" : "games are"} still
-          sealed. Each column opens an hour before its own kickoff.
+          sealed. Each column opens the moment that game kicks off.
         </p>
       )}
 
@@ -134,6 +134,8 @@ export default async function GridPage({
                     {isRevealed(g.kickoffAt, now)
                       ? kickoffLabel(g.kickoffAt).replace(/,/g, "")
                       : `opens ${timeLabel(revealAt(g.kickoffAt).toISOString())}`}
+                    {/* revealAt tracks REVEAL_MINUTES, so this line stays
+                        correct if the lock ever moves off kickoff again */}
                   </div>
                 </th>
               ))}
@@ -218,15 +220,13 @@ function Shell({
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-5">
       <div className="mx-auto max-w-5xl">
-        <AutoRefresh seconds={60} />
+        <AutoRefresh />
         <Nav current="grid" />
 
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">The grid</h1>
-            <p className="text-sm text-neutral-500">
-              {title ? `${title} · ` : ""}updates every minute
-            </p>
+            {title && <p className="text-sm text-neutral-500">{title}</p>}
           </div>
           <div className="flex items-center gap-4">
             {weeks.length > 1 && (

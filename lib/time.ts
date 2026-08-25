@@ -6,8 +6,15 @@
 
 export const LEAGUE_TZ = "America/New_York";
 
-/** Minutes before kickoff that a game locks and its picks become visible. */
-export const REVEAL_MINUTES = 60;
+/**
+ * Minutes before kickoff that a game locks and its picks become visible.
+ *
+ * Zero means both happen at kickoff. Lock and reveal are driven by this one
+ * number on purpose: if they could be set separately, someone would
+ * eventually open a window where picks are visible but still editable, and
+ * the whole sealed-pick guarantee would quietly stop being true.
+ */
+export const REVEAL_MINUTES = 0;
 
 const kickoffFmt = new Intl.DateTimeFormat("en-US", {
   timeZone: LEAGUE_TZ,

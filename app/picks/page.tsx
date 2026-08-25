@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { currentWeek, gamesForWeek, myPicks, type Game } from "@/lib/week";
-import { kickoffLabel, isLocked, REVEAL_MINUTES } from "@/lib/time";
+import { kickoffLabel, isLocked } from "@/lib/time";
 import Nav from "@/components/nav";
 import { savePicks } from "./actions";
 
@@ -254,8 +254,8 @@ function SavedPanel() {
     <div className="mb-5 rounded-lg border border-emerald-800 bg-emerald-950/30 p-4">
       <p className="font-semibold text-emerald-300">Picks saved.</p>
       <p className="mt-1 text-sm text-emerald-200/70">
-        Sealed until an hour before each kickoff. Nobody can see them until
-        then &mdash; including you, on the grid.
+        Sealed until each game kicks off. Nobody can see them until then
+        &mdash; including you, on the grid.
       </p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -322,8 +322,8 @@ function Shell({
         </div>
         {children}
         <p className="mt-8 text-center text-xs text-neutral-700">
-          Each game locks and opens to everyone {REVEAL_MINUTES} minutes before
-          its kickoff.
+          Every game locks at kickoff. That&rsquo;s the same instant everyone
+          else gets to see what you picked.
         </p>
       </div>
     </main>

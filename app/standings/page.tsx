@@ -125,7 +125,7 @@ export default async function StandingsPage() {
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-5">
       <div className="mx-auto max-w-2xl">
-        <AutoRefresh seconds={60} />
+        <AutoRefresh />
         <Nav current="standings" />
 
         <div className="mb-6 flex items-baseline justify-between">
@@ -133,7 +133,6 @@ export default async function StandingsPage() {
             <h1 className="text-2xl font-bold tracking-tight">Standings</h1>
             <p className="text-sm text-neutral-500">
               {graded.length} {graded.length === 1 ? "game" : "games"} graded
-              &middot; updates every minute
             </p>
           </div>
           <Link
