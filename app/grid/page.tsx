@@ -225,7 +225,7 @@ function Shell({
 
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">The grid</h1>
+            <h1 className="text-2xl font-bold tracking-tight">The Grid</h1>
             {title && <p className="text-sm text-neutral-500">{title}</p>}
           </div>
           <div className="flex items-center gap-4">

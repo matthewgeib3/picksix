@@ -15,19 +15,19 @@ export const dynamic = "force-dynamic";
 const CARDS = [
   {
     href: "/admin/publish",
-    title: "Publish a week",
+    title: "Publish a Week",
     body: "Pull both slates, tick six games, freeze the spreads. Also where a week gets flipped to practice or deleted.",
     when: "Every Tuesday",
   },
   {
     href: "/admin/results",
-    title: "Enter results",
+    title: "Enter Results",
     body: "Pull final scores on demand, or type one in by hand when the feed gets it wrong. Saving recomputes who covered.",
     when: "As needed",
   },
   {
     href: "/admin/members",
-    title: "Manage the roster",
+    title: "Manage the Roster",
     body: "Add players, set and reset passwords, hand out or revoke commissioner rights, deactivate someone.",
     when: "Rarely",
   },
@@ -66,7 +66,7 @@ export default async function AdminHome() {
         <AdminNav current="overview" />
 
         <h1 className="mb-6 text-2xl font-bold tracking-tight">
-          {week ? week.label : "Nothing published"}
+          {week ? week.label : "Nothing Published"}
         </h1>
 
         {/* ---------------- status ---------------- */}
@@ -89,7 +89,7 @@ export default async function AdminHome() {
         {week && behind.length > 0 && (
           <div className="mb-8 rounded-lg border border-amber-900 bg-amber-950/25 p-4">
             <p className="mb-2 text-sm font-semibold text-amber-300">
-              Still owe picks
+              Still Owe Picks
             </p>
             <ul className="space-y-1 text-sm text-amber-200/80">
               {behind.map((s) => (

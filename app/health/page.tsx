@@ -85,7 +85,7 @@ export default async function HealthPage() {
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-8 font-mono text-sm">
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-bold tracking-tight mb-1">
-          Pick Six &middot; health check
+          Pick Six &middot; Health Check
         </h1>
         <p className="text-neutral-400 mb-8">
           {allGood

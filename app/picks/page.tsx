@@ -24,7 +24,7 @@ export default async function PicksPage({
 
   if (!week) {
     return (
-      <Shell title="Make picks">
+      <Shell title="Make Picks">
         <p className="text-neutral-400">
           Nothing published yet. The commissioner posts the slate on Tuesdays.
         </p>
@@ -43,7 +43,7 @@ export default async function PicksPage({
   const missing = open.filter((g) => !picks.has(g.id)).length;
 
   return (
-    <Shell title="Make picks" subtitle={week.label}>
+    <Shell title="Make Picks" subtitle={week.label}>
       {flags.saved && <SavedPanel />}
       {flags.late && (
         <Note tone="warn">

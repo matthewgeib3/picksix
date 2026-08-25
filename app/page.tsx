@@ -5,8 +5,8 @@ import { logout } from "./login/actions";
 export const dynamic = "force-dynamic";
 
 const LINKS = [
-  { href: "/picks", label: "Make picks", note: "This week's six games", ready: true },
-  { href: "/grid", label: "The grid", note: "Everyone's picks, once they open", ready: true },
+  { href: "/picks", label: "Make Picks", note: "This week's six games", ready: true },
+  { href: "/grid", label: "The Grid", note: "Everyone's picks, once they open", ready: true },
   { href: "/standings", label: "Standings", note: "Season leaderboard", ready: true },
 ];
 

@@ -81,7 +81,7 @@ export default async function PublishPage({
       <div className="mx-auto max-w-5xl">
         <AdminNav current="publish" />
         <h1 className="mb-8 text-3xl font-bold tracking-tight">
-          Publish a week
+          Publish a Week
         </h1>
 
         {params.error && (
@@ -182,7 +182,7 @@ export default async function PublishPage({
         {weeks.length > 0 && (
           <div className="mt-14">
             <h2 className="text-xl font-bold tracking-tight mb-4">
-              Published weeks
+              Published Weeks
             </h2>
             <div className="space-y-2">
               {weeks.map((w) => (

@@ -129,7 +129,7 @@ export default async function MembersPage({
         </div>
 
         {/* ---------------- add ---------------- */}
-        <h2 className="text-xl font-bold tracking-tight mb-1">Add a member</h2>
+        <h2 className="text-xl font-bold tracking-tight mb-1">Add a Member</h2>
         <p className="text-sm text-neutral-500 mb-5">
           You&rsquo;re setting their password, so send it to them yourself.
           Passwords are stored hashed — you can replace one, but never read it
