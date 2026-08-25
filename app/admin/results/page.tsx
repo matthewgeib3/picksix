@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import AdminNav from "@/components/admin-nav";
 import {
   allWeeks,
   currentWeek,
@@ -25,13 +25,10 @@ export default async function ResultsPage({
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-6">
       <div className="mx-auto max-w-3xl">
+        <AdminNav current="results" />
+
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-amber-500 font-semibold mb-2">
-              Commissioner
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight">Results</h1>
-          </div>
+          <h1 className="text-3xl font-bold tracking-tight">Results</h1>
           <div className="flex items-center gap-4">
             {weeks.length > 0 && (
               <form method="get">
@@ -51,12 +48,6 @@ export default async function ResultsPage({
                 </button>
               </form>
             )}
-            <Link
-              href="/"
-              className="text-sm text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
-            >
-              Back
-            </Link>
           </div>
         </div>
 

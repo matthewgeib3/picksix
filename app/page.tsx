@@ -50,27 +50,16 @@ export default async function HomePage() {
         </div>
 
         <div className="flex items-center gap-4 text-sm">
+          {/* Only a commissioner ever sees this link -- and every page behind
+              it re-checks on the server, so knowing the URL gets a normal
+              member nowhere. */}
           {member.isAdmin && (
-            <>
-              <Link
-                href="/admin/publish"
-                className="text-amber-500 underline underline-offset-4 hover:text-amber-400"
-              >
-                Publish a week
-              </Link>
-              <Link
-                href="/admin/results"
-                className="text-amber-500 underline underline-offset-4 hover:text-amber-400"
-              >
-                Results
-              </Link>
-              <Link
-                href="/admin/members"
-                className="text-amber-500 underline underline-offset-4 hover:text-amber-400"
-              >
-                Roster
-              </Link>
-            </>
+            <Link
+              href="/admin"
+              className="text-amber-500 underline underline-offset-4 hover:text-amber-400"
+            >
+              Commissioner
+            </Link>
           )}
           <form action={logout}>
             <button className="text-neutral-500 underline underline-offset-4 hover:text-neutral-300">

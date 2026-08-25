@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import AdminNav from "@/components/admin-nav";
 import { db } from "@/lib/supabase";
 import { fetchSlate, type SlateGame } from "@/lib/espn";
 import { kickoffLabel, spreadLabel } from "@/lib/time";
@@ -79,20 +79,10 @@ export default async function PublishPage({
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-6">
       <div className="mx-auto max-w-5xl">
-        <div className="flex items-baseline justify-between mb-8">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-amber-500 font-semibold mb-2">
-              Commissioner
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight">Publish a week</h1>
-          </div>
-          <Link
-            href="/"
-            className="text-sm text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
-          >
-            Back
-          </Link>
-        </div>
+        <AdminNav current="publish" />
+        <h1 className="mb-8 text-3xl font-bold tracking-tight">
+          Publish a week
+        </h1>
 
         {params.error && (
           <p className="mb-6 rounded border border-red-900 bg-red-950/50 px-3 py-2 text-sm text-red-300">
