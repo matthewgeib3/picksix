@@ -129,18 +129,41 @@ export async function unpublishWeek(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) back("db");
 
-  // Only allowed while nobody has picked yet -- otherwise you'd be deleting
-  // people's submitted picks along with the games.
-  const { count } = await db()
-    .from("picks")
-    .select("id, games!inner(week_id)", { count: "exact", head: true })
-    .eq("games.week_id", id);
+  const { data: week } = await db()
+    .from("weeks")
+    .select("id, counts")
+    .eq("id", id)
+    .maybeSingle();
 
-  if ((count ?? 0) > 0) back("haspicks");
+  if (!week) back("db");
 
+  // A practice week is disposable by design -- that's the whole point of
+  // rehearsing. A counting week is not: deleting it would take real picks
+  // down with it, so it stays locked once anyone has submitted.
+  if (week.counts) {
+    const { data: games } = await db()
+      .from("games")
+      .select("id")
+      .eq("week_id", id);
+
+    const gameIds = ((games ?? []) as { id: string }[]).map((g) => g.id);
+
+    if (gameIds.length > 0) {
+      const { count } = await db()
+        .from("picks")
+        .select("id", { count: "exact", head: true })
+        .in("game_id", gameIds);
+
+      if ((count ?? 0) > 0) back("haspicks");
+    }
+  }
+
+  // Games cascade from the week, and picks cascade from the games, so this
+  // one delete takes the whole thing with it.
   const { error } = await db().from("weeks").delete().eq("id", id);
   if (error) back("db");
 
   revalidatePath(PAGE);
+  revalidatePath("/standings");
   redirect(`${PAGE}?ok=removed`);
 }

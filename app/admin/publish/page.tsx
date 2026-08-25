@@ -14,7 +14,8 @@ const ERRORS: Record<string, string> = {
   spread: "One of the spreads isn't a number.",
   halfpoint: "Every spread has to land on a half point, like -6.5.",
   duplicate: "A week with that name already exists this season.",
-  haspicks: "Can't remove a week once people have picked in it.",
+  haspicks:
+    "People have already picked in that week. Flip it to practice first if you really mean to delete it and their picks.",
   data: "Something got mangled in the form. Reload and try again.",
   db: "The database rejected that. Check /health.",
   games: "The week saved but the games didn't. Nothing was kept.",
@@ -222,7 +223,7 @@ export default async function PublishPage({
                     <form action={unpublishWeek}>
                       <input type="hidden" name="id" value={w.id} />
                       <button className="text-sm text-neutral-500 underline underline-offset-4 hover:text-red-400">
-                        Remove
+                        {w.counts ? "Remove" : "Delete week + picks"}
                       </button>
                     </form>
                   </div>
@@ -230,7 +231,9 @@ export default async function PublishPage({
               ))}
             </div>
             <p className="mt-3 text-xs text-neutral-600">
-              Removing only works while nobody has picked in that week yet.
+              Practice weeks can be deleted at any time, picks included. A
+              counting week can only be removed while nobody has picked in it
+              &mdash; flip it to practice first if you genuinely want it gone.
             </p>
           </div>
         )}
