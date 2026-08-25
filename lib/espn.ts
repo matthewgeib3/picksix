@@ -183,3 +183,56 @@ export async function fetchResults(
   const slate = await fetchSlate(league, query);
   return new Map(slate.map((g) => [g.espnEventId, g]));
 }
+
+/* ------------------------------------------------------------------ */
+/* single game result                                                  */
+/* ------------------------------------------------------------------ */
+
+export type GameResult = {
+  homeScore: number | null;
+  awayScore: number | null;
+  completed: boolean;
+  status: string;
+};
+
+type EspnSummary = {
+  header?: {
+    competitions?: {
+      competitors?: EspnCompetitor[];
+      status?: { type?: { name?: string; completed?: boolean } };
+    }[];
+  };
+};
+
+/**
+ * One game, looked up by its ESPN id.
+ *
+ * We ask per game rather than per week because the event id is exact --
+ * no guessing which week or which timezone a Thursday night game lands in.
+ * Six games a week makes six requests, which is nothing.
+ */
+export async function fetchGameResult(
+  league: League,
+  eventId: string
+): Promise<GameResult | null> {
+  const res = await fetch(
+    `${BASE}/${PATH[league]}/summary?event=${encodeURIComponent(eventId)}`,
+    { headers: { "User-Agent": "picksix" }, cache: "no-store" }
+  );
+
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as EspnSummary;
+  const comp = data.header?.competitions?.[0];
+  if (!comp) return null;
+
+  const home = comp.competitors?.find((c) => c.homeAway === "home");
+  const away = comp.competitors?.find((c) => c.homeAway === "away");
+
+  return {
+    homeScore: toScore(home?.score),
+    awayScore: toScore(away?.score),
+    completed: Boolean(comp.status?.type?.completed),
+    status: comp.status?.type?.name ?? "UNKNOWN",
+  };
+}

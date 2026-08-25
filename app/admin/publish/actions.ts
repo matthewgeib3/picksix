@@ -108,6 +108,21 @@ export async function publishWeek(formData: FormData) {
   redirect(`${PAGE}?ok=${encodeURIComponent(label)}`);
 }
 
+export async function setCounts(formData: FormData) {
+  await requireAdmin();
+
+  const id = String(formData.get("id") ?? "");
+  const counts = formData.get("counts") === "true";
+  if (!id) back("db");
+
+  const { error } = await db().from("weeks").update({ counts }).eq("id", id);
+  if (error) back("db");
+
+  revalidatePath(PAGE);
+  revalidatePath("/standings");
+  redirect(`${PAGE}?ok=${counts ? "counting" : "practice"}`);
+}
+
 export async function unpublishWeek(formData: FormData) {
   await requireAdmin();
 

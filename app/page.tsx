@@ -59,6 +59,12 @@ export default async function HomePage() {
                 Publish a week
               </Link>
               <Link
+                href="/admin/results"
+                className="text-amber-500 underline underline-offset-4 hover:text-amber-400"
+              >
+                Results
+              </Link>
+              <Link
                 href="/admin/members"
                 className="text-amber-500 underline underline-offset-4 hover:text-amber-400"
               >

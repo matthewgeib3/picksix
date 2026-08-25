@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/supabase";
 import { fetchSlate, type SlateGame } from "@/lib/espn";
 import { kickoffLabel, spreadLabel } from "@/lib/time";
-import { publishWeek, unpublishWeek } from "./actions";
+import { publishWeek, unpublishWeek, setCounts } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +68,7 @@ export default async function PublishPage({
     safeSlate("nfl", { year: season, seasonType: nflType, week: nflWeek }),
     db()
       .from("weeks")
-      .select("id, label, status, published_at, sort_order")
+      .select("id, label, status, published_at, sort_order, counts")
       .eq("season", season)
       .order("sort_order", { ascending: false }),
   ]);
@@ -201,16 +201,31 @@ export default async function PublishPage({
                 >
                   <div>
                     <span className="font-semibold">{w.label}</span>
-                    <span className="ml-3 text-xs uppercase tracking-wider text-neutral-500">
-                      {w.status}
-                    </span>
+                    {!w.counts && (
+                      <span className="ml-3 rounded bg-neutral-700/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                        Practice
+                      </span>
+                    )}
                   </div>
-                  <form action={unpublishWeek}>
-                    <input type="hidden" name="id" value={w.id} />
-                    <button className="text-sm text-neutral-500 underline underline-offset-4 hover:text-red-400">
-                      Remove
-                    </button>
-                  </form>
+                  <div className="flex items-center gap-4">
+                    <form action={setCounts}>
+                      <input type="hidden" name="id" value={w.id} />
+                      <input
+                        type="hidden"
+                        name="counts"
+                        value={w.counts ? "false" : "true"}
+                      />
+                      <button className="text-sm text-neutral-500 underline underline-offset-4 hover:text-neutral-300">
+                        {w.counts ? "Make practice" : "Make it count"}
+                      </button>
+                    </form>
+                    <form action={unpublishWeek}>
+                      <input type="hidden" name="id" value={w.id} />
+                      <button className="text-sm text-neutral-500 underline underline-offset-4 hover:text-red-400">
+                        Remove
+                      </button>
+                    </form>
+                  </div>
                 </div>
               ))}
             </div>

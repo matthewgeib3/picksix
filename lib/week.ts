@@ -77,12 +77,19 @@ function toGame(r: GameRow): Game {
   };
 }
 
-/** The week everyone is currently picking: the newest published one. */
+/**
+ * The week everyone is currently picking: the newest published one.
+ *
+ * Sorted by season first, because sort_order restarts at 1 each season --
+ * without that, publishing a 2025 week for testing could outrank the live
+ * 2026 one and quietly hijack the picks page.
+ */
 export async function currentWeek(): Promise<Week | null> {
   const { data } = await db()
     .from("weeks")
     .select("id, season, label, sort_order, status")
     .eq("status", "live")
+    .order("season", { ascending: false })
     .order("sort_order", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -94,6 +101,7 @@ export async function allWeeks(): Promise<Week[]> {
   const { data } = await db()
     .from("weeks")
     .select("id, season, label, sort_order, status")
+    .order("season", { ascending: false })
     .order("sort_order", { ascending: false });
 
   return ((data ?? []) as WeekRow[]).map(toWeek);

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { db } from "@/lib/supabase";
 import { activeMembers } from "@/lib/week";
+import { gradeOpenGames } from "@/lib/grade";
 
 export const dynamic = "force-dynamic";
 
@@ -31,20 +32,39 @@ type Line = {
 
 export default async function StandingsPage() {
   const me = await requireMember();
+
+  // Opening the standings is itself a grading trigger. The scheduled job only
+  // runs once a day on Vercel's free tier, and this closes the gap: whoever
+  // checks the table first on a Sunday evening pulls the finals in for
+  // everyone. It costs nothing when there's nothing to grade -- the query
+  // that looks for finished-but-ungraded games simply comes back empty.
+  await gradeOpenGames(8);
+
   const members = await activeMembers();
 
+  // Practice weeks are excluded here, which is the only place it matters --
+  // they still publish, lock, reveal and grade exactly like a real week.
+  const { data: weekRows } = await db()
+    .from("weeks")
+    .select("id")
+    .eq("counts", true);
+
+  const countingWeeks = ((weekRows ?? []) as { id: string }[]).map((w) => w.id);
+
   const [{ data: gameRows }, { data: pickRows }] = await Promise.all([
-    db()
-      .from("games")
-      .select("id, league, ats_winner")
-      .eq("status", "final")
-      .not("ats_winner", "is", null),
+    countingWeeks.length
+      ? db()
+          .from("games")
+          .select("id, league, ats_winner")
+          .in("week_id", countingWeeks)
+          .eq("status", "final")
+          .not("ats_winner", "is", null)
+      : Promise.resolve({ data: [] as GradedGame[] }),
     db().from("picks").select("member_id, game_id, selection"),
   ]);
 
   const graded = (gameRows ?? []) as GradedGame[];
   const picks = (pickRows ?? []) as PickRow[];
-  const gradedById = new Map(graded.map((g) => [g.id, g]));
 
   const lines: Line[] = members.map((m) => {
     const line: Line = {
