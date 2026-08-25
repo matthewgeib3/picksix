@@ -4,9 +4,10 @@ import {
   allWeeks,
   currentWeek,
   gamesForWeek,
+  picksForGames,
   weekById,
 } from "@/lib/week";
-import { kickoffLabel, spreadLabel } from "@/lib/time";
+import { kickoffLabel, isLocked } from "@/lib/time";
 import { saveResults, pullResults } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,18 @@ export default async function ResultsPage({
             Leave both blank to clear a game.
           </p>
         )}
+        {params.error === "halfpoint" && (
+          <p className="mb-6 rounded border border-red-900 bg-red-950/50 px-3 py-2 text-sm text-red-300">
+            Every spread has to land on a half point, like &minus;6.5. Nothing
+            was saved.
+          </p>
+        )}
+        {params.error === "spread" && (
+          <p className="mb-6 rounded border border-red-900 bg-red-950/50 px-3 py-2 text-sm text-red-300">
+            One of those spreads isn&rsquo;t a sensible number. Nothing was
+            saved.
+          </p>
+        )}
         {params.ok && (
           <p className="mb-6 rounded border border-emerald-900 bg-emerald-950/40 px-3 py-2 text-sm text-emerald-300">
             {params.ok}
@@ -75,6 +88,11 @@ export default async function ResultsPage({
 
 async function Week({ weekId, label }: { weekId: string; label: string }) {
   const games = await gamesForWeek(weekId);
+  const picks = await picksForGames(games.map((g) => g.id));
+  const now = new Date();
+
+  const pickCount = (gameId: string) =>
+    picks.filter((p) => p.gameId === gameId).length;
 
   return (
     <>
@@ -102,8 +120,21 @@ async function Week({ weekId, label }: { weekId: string; label: string }) {
                 {g.homeAbbr}
               </span>
 
-              <span className="w-24 shrink-0 font-mono text-sm tabular-nums text-neutral-500">
-                {spreadLabel(g.homeSpread, g.homeAbbr, g.awayAbbr)}
+              <span className="flex w-32 shrink-0 items-center gap-1.5">
+                <input
+                  name={`spread_${g.id}`}
+                  defaultValue={g.homeSpread}
+                  disabled={isLocked(g.kickoffAt, now)}
+                  className="w-20 rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-center font-mono text-sm tabular-nums outline-none focus:border-amber-500 disabled:cursor-not-allowed disabled:opacity-40"
+                />
+                {!isLocked(g.kickoffAt, now) && pickCount(g.id) > 0 && (
+                  <span
+                    title={`${pickCount(g.id)} picks already submitted`}
+                    className="text-[10px] text-amber-600"
+                  >
+                    {pickCount(g.id)}&nbsp;in
+                  </span>
+                )}
               </span>
 
               <span className="w-36 shrink-0 text-xs tabular-nums text-neutral-600">
@@ -145,9 +176,15 @@ async function Week({ weekId, label }: { weekId: string; label: string }) {
           Save scores
         </button>
         <p className="mt-3 text-xs text-neutral-600">
-          Away score on the left, home on the right. Saving recomputes who
-          covered using the spread we froze at publish time, never a current
-          one. Clear both boxes to put a game back to ungraded.
+          Away score on the left, home on the right. Clear both boxes to put a
+          game back to ungraded.
+        </p>
+        <p className="mt-2 text-xs text-neutral-600">
+          The spread box is editable until that game kicks off, for when the
+          feed hands you a bad number. An amber count beside it means people
+          have already picked against the current line &mdash; tell them if you
+          move it. After kickoff the box locks: that number is what everyone
+          was graded against, and changing it would silently rewrite results.
         </p>
       </form>
     </>

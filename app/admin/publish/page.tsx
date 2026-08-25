@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import AdminNav from "@/components/admin-nav";
 import { db } from "@/lib/supabase";
@@ -29,6 +30,7 @@ type Params = {
   nflWeek?: string;
   error?: string;
   ok?: string;
+  confirmDelete?: string;
 };
 
 function num(value: string | undefined, fallback: number): number {
@@ -59,10 +61,27 @@ export default async function PublishPage({
   const params = await searchParams;
 
   const season = num(params.season, 2026);
-  const cfbType = num(params.cfbType, 2);
-  const cfbWeek = num(params.cfbWeek, 1);
-  const nflType = num(params.nflType, 2);
-  const nflWeek = num(params.nflWeek, 1);
+
+  // Default to one week on from whatever you published last, rather than
+  // making you retype the numbers every Tuesday for five months.
+  const { data: previous } = await db()
+    .from("weeks")
+    .select("cfb_week, cfb_type, nfl_week, nfl_type")
+    .eq("season", season)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const cfbType = num(params.cfbType, previous?.cfb_type ?? 2);
+  const nflType = num(params.nflType, previous?.nfl_type ?? 2);
+  const cfbWeek = num(
+    params.cfbWeek,
+    previous?.cfb_week ? previous.cfb_week + 1 : 1
+  );
+  const nflWeek = num(
+    params.nflWeek,
+    previous?.nfl_week ? previous.nfl_week + 1 : 1
+  );
 
   const [cfb, nfl, weeksResult] = await Promise.all([
     safeSlate("cfb", { year: season, seasonType: cfbType, week: cfbWeek }),
@@ -154,6 +173,10 @@ export default async function PublishPage({
         {/* ---------------- the picker ---------------- */}
         <form action={publishWeek}>
           <input type="hidden" name="season" value={season} />
+          <input type="hidden" name="cfbWeek" value={cfbWeek} />
+          <input type="hidden" name="cfbType" value={cfbType} />
+          <input type="hidden" name="nflWeek" value={nflWeek} />
+          <input type="hidden" name="nflType" value={nflType} />
 
           <div className="mb-6 flex flex-wrap items-end gap-4 rounded border border-neutral-800 bg-neutral-900/60 p-4">
             <Field label="Week name">
@@ -210,12 +233,32 @@ export default async function PublishPage({
                         {w.counts ? "Make practice" : "Make it count"}
                       </button>
                     </form>
-                    <form action={unpublishWeek}>
-                      <input type="hidden" name="id" value={w.id} />
-                      <button className="text-sm text-neutral-500 underline underline-offset-4 hover:text-red-400">
+                    {params.confirmDelete === w.id ? (
+                      <span className="flex items-center gap-3">
+                        <span className="text-sm text-red-300">
+                          Delete {w.label} and every pick in it?
+                        </span>
+                        <form action={unpublishWeek}>
+                          <input type="hidden" name="id" value={w.id} />
+                          <button className="rounded bg-red-900/60 px-2.5 py-1 text-sm font-semibold text-red-200 hover:bg-red-800/60">
+                            Yes, delete
+                          </button>
+                        </form>
+                        <Link
+                          href={`/admin/publish?season=${season}`}
+                          className="text-sm text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
+                        >
+                          Cancel
+                        </Link>
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/admin/publish?season=${season}&confirmDelete=${w.id}`}
+                        className="text-sm text-neutral-500 underline underline-offset-4 hover:text-red-400"
+                      >
                         {w.counts ? "Remove" : "Delete week + picks"}
-                      </button>
-                    </form>
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}
@@ -260,10 +303,24 @@ function Slate({
   league: "cfb" | "nfl";
   result: { games: SlateGame[]; error: string | null };
 }) {
+  // Games that have already kicked off are unpickable the moment they're
+  // published, which would just look broken. Hide them rather than let you
+  // tick one by accident.
+  const now = Date.now();
+  const upcoming = result.games.filter(
+    (g) => new Date(g.kickoffAt).getTime() > now
+  );
+  const started = result.games.length - upcoming.length;
+
   return (
     <section className="mb-8">
       <h2 className="text-xs uppercase tracking-[0.14em] text-neutral-500 font-semibold mb-3">
-        {title} &middot; {result.games.length} games
+        {title} &middot; {upcoming.length} available
+        {started > 0 && (
+          <span className="ml-2 font-normal normal-case tracking-normal text-neutral-600">
+            ({started} already started, hidden)
+          </span>
+        )}
       </h2>
 
       {result.error && (
@@ -273,7 +330,12 @@ function Slate({
       )}
 
       <div className="divide-y divide-neutral-900 rounded border border-neutral-800">
-        {result.games.map((g) => {
+        {upcoming.length === 0 && !result.error && (
+          <p className="px-4 py-6 text-center text-sm text-neutral-600">
+            Nothing left to pick in this week. Try the next one.
+          </p>
+        )}
+        {upcoming.map((g) => {
           const carried = JSON.stringify({
             espnEventId: g.espnEventId,
             league,

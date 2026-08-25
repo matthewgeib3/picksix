@@ -193,11 +193,14 @@ export type GameResult = {
   awayScore: number | null;
   completed: boolean;
   status: string;
+  /** Current scheduled kickoff. Moves when a game is flexed or postponed. */
+  kickoffAt: string | null;
 };
 
 type EspnSummary = {
   header?: {
     competitions?: {
+      date?: string;
       competitors?: EspnCompetitor[];
       status?: { type?: { name?: string; completed?: boolean } };
     }[];
@@ -229,10 +232,17 @@ export async function fetchGameResult(
   const home = comp.competitors?.find((c) => c.homeAway === "home");
   const away = comp.competitors?.find((c) => c.homeAway === "away");
 
+  let kickoffAt: string | null = null;
+  if (comp.date) {
+    const parsed = new Date(comp.date);
+    if (!Number.isNaN(parsed.getTime())) kickoffAt = parsed.toISOString();
+  }
+
   return {
     homeScore: toScore(home?.score),
     awayScore: toScore(away?.score),
     completed: Boolean(comp.status?.type?.completed),
     status: comp.status?.type?.name ?? "UNKNOWN",
+    kickoffAt,
   };
 }

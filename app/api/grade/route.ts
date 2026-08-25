@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { gradeOpenGames } from "@/lib/grade";
+import { sweep } from "@/lib/grade";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -21,6 +21,6 @@ export async function GET(request: Request) {
     }
   }
 
-  const report = await gradeOpenGames();
+  const report = await sweep();
   return NextResponse.json(report);
 }

@@ -78,6 +78,11 @@ export async function publishWeek(formData: FormData) {
 
   const sortOrder = (last?.sort_order ?? 0) + 1;
 
+  const asInt = (key: string): number | null => {
+    const value = Number(formData.get(key));
+    return Number.isInteger(value) && value > 0 ? value : null;
+  };
+
   const { data: week, error: weekError } = await db()
     .from("weeks")
     .insert({
@@ -86,6 +91,11 @@ export async function publishWeek(formData: FormData) {
       sort_order: sortOrder,
       status: "live",
       published_at: new Date().toISOString(),
+      // Remembered only so next Tuesday's screen can default to week N+1.
+      cfb_week: asInt("cfbWeek"),
+      cfb_type: asInt("cfbType"),
+      nfl_week: asInt("nflWeek"),
+      nfl_type: asInt("nflType"),
     })
     .select("id")
     .single();

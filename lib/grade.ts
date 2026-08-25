@@ -20,31 +20,112 @@ export type GradeReport = {
 /** Don't bother asking about a game that kicked off twenty minutes ago. */
 const SETTLE_MINUTES = 120;
 
-/**
- * Floor on how often a page view is allowed to trigger grading.
- *
- * Six people with the grid open, each refreshing every minute, would
- * otherwise hammer an undocumented API with hundreds of requests an hour and
- * get us rate-limited. This caps it regardless of how many people are
- * watching, while still catching a final within a couple of minutes.
- */
-const VIEW_THROTTLE_MS = 45_000;
-let lastViewRun = 0;
+/* ------------------------------------------------------------------ */
+/* keeping kickoff times honest                                        */
+/* ------------------------------------------------------------------ */
+
+type UpcomingGame = {
+  id: string;
+  league: League;
+  espn_event_id: string | null;
+  kickoff_at: string;
+};
 
 /**
- * Grading triggered by somebody looking at a page. Throttled, and it never
- * throws -- a bad response from ESPN must not take the leaderboard down.
+ * Re-checks the scheduled kickoff of games that haven't started.
+ *
+ * This matters more than it looks. The kickoff time is the lock deadline,
+ * and we froze ours at publish time -- but the NFL flexes Sunday games and
+ * weather moves college ones. If a game is pulled EARLIER and we don't
+ * notice, picks stay open on a game that has already started, which is a
+ * fairness hole rather than a cosmetic one.
+ */
+export async function refreshKickoffs(limit = 12): Promise<number> {
+  const { data, error } = await db()
+    .from("games")
+    .select("id, league, espn_event_id, kickoff_at")
+    .eq("status", "scheduled")
+    .gt("kickoff_at", new Date().toISOString())
+    .order("kickoff_at", { ascending: true })
+    .limit(limit);
+
+  if (error) return 0;
+
+  let moved = 0;
+
+  for (const game of (data ?? []) as UpcomingGame[]) {
+    if (!game.espn_event_id) continue;
+
+    try {
+      const result = await fetchGameResult(game.league, game.espn_event_id);
+      if (!result?.kickoffAt) continue;
+
+      const current = new Date(game.kickoff_at).toISOString();
+      if (result.kickoffAt === current) continue;
+
+      await db()
+        .from("games")
+        .update({ kickoff_at: result.kickoffAt })
+        .eq("id", game.id);
+
+      moved += 1;
+    } catch {
+      /* one bad lookup shouldn't stop the rest */
+    }
+  }
+
+  return moved;
+}
+
+/* ------------------------------------------------------------------ */
+/* the sweep                                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Two separate throttles, because the two jobs move at very different speeds.
+ *
+ * Grading needs to be prompt -- people are watching for a result. Kickoff
+ * times change maybe twice a season and are announced days ahead, so checking
+ * every half hour is generous. Keeping them apart stops the schedule check
+ * from tripling our request count against an undocumented API.
+ */
+const GRADE_THROTTLE_MS = 45_000;
+const SCHEDULE_THROTTLE_MS = 30 * 60_000;
+
+let lastGradeRun = 0;
+let lastScheduleRun = 0;
+
+/**
+ * Triggered by somebody looking at a page. Throttled, and it never throws --
+ * a bad response from ESPN must not take the leaderboard down.
  */
 export async function gradeOnView(limit = 8): Promise<void> {
   const now = Date.now();
-  if (now - lastViewRun < VIEW_THROTTLE_MS) return;
-  lastViewRun = now;
 
-  try {
-    await gradeOpenGames(limit);
-  } catch {
-    /* swallowed on purpose */
+  if (now - lastScheduleRun >= SCHEDULE_THROTTLE_MS) {
+    lastScheduleRun = now;
+    try {
+      await refreshKickoffs();
+    } catch {
+      /* swallowed on purpose */
+    }
   }
+
+  if (now - lastGradeRun >= GRADE_THROTTLE_MS) {
+    lastGradeRun = now;
+    try {
+      await gradeOpenGames(limit);
+    } catch {
+      /* swallowed on purpose */
+    }
+  }
+}
+
+/** Full sweep for the scheduled job and the admin's manual button. */
+export async function sweep(): Promise<GradeReport & { moved: number }> {
+  const moved = await refreshKickoffs();
+  const report = await gradeOpenGames();
+  return { ...report, moved };
 }
 
 type OpenGame = {
