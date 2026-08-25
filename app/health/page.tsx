@@ -1,4 +1,4 @@
-import { db, envReady, envStatus } from "@/lib/supabase";
+import { db, describeEnv, envReady, envStatus, pingRest } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -7,32 +7,47 @@ const TABLES = ["members", "weeks", "games", "picks", "tiebreakers"] as const;
 type Check = { label: string; ok: boolean; detail: string };
 
 async function runChecks(): Promise<Check[]> {
+  const env = describeEnv();
+
   const checks: Check[] = [
     {
       label: "SUPABASE_URL",
-      ok: envStatus.url,
-      detail: envStatus.url ? "found" : "missing from .env.local",
+      ok: envStatus.url && env.valid,
+      detail: envStatus.url
+        ? env.valid
+          ? `host ${env.host}`
+          : `not a valid URL: "${env.url}"`
+        : "missing",
     },
     {
       label: "SUPABASE_SECRET_KEY",
-      ok: envStatus.secret,
-      detail: envStatus.secret ? "found" : "missing from .env.local",
+      ok: envStatus.secret && env.secretPrefix.startsWith("sb_secret"),
+      detail: envStatus.secret
+        ? `starts "${env.secretPrefix}", ${env.secretLength} chars`
+        : "missing",
     },
     {
       label: "SESSION_SECRET",
       ok: envStatus.sessionSecret,
-      detail: envStatus.sessionSecret ? "found" : "missing from .env.local",
+      detail: envStatus.sessionSecret ? "found" : "missing",
     },
   ];
 
   if (!envReady) {
     checks.push({
-      label: "database",
+      label: "connection",
       ok: false,
-      detail: "skipped -- fix the env file first, then restart the dev server",
+      detail: "skipped — fix the env vars first",
     });
     return checks;
   }
+
+  const ping = await pingRest();
+  checks.push({
+    label: "connection",
+    ok: ping.startsWith("HTTP"),
+    detail: ping,
+  });
 
   for (const table of TABLES) {
     try {
@@ -43,13 +58,18 @@ async function runChecks(): Promise<Check[]> {
       checks.push({
         label: `table: ${table}`,
         ok: !error,
-        detail: error ? error.message : `ok, ${count ?? 0} rows`,
+        detail: error ? `${error.message}${error.hint ? ` — ${error.hint}` : ""}` : `ok, ${count ?? 0} rows`,
       });
     } catch (err) {
+      const message = err instanceof Error ? err.message : "unknown error";
+      const cause =
+        err instanceof Error && err.cause instanceof Error
+          ? ` (${err.cause.message})`
+          : "";
       checks.push({
         label: `table: ${table}`,
         ok: false,
-        detail: err instanceof Error ? err.message : "unknown error",
+        detail: `${message}${cause}`,
       });
     }
   }
@@ -63,13 +83,13 @@ export default async function HealthPage() {
 
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-8 font-mono text-sm">
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-bold tracking-tight mb-1">
           Pick Six &middot; health check
         </h1>
         <p className="text-neutral-400 mb-8">
           {allGood
-            ? "Everything is wired up. You can delete this page later."
+            ? "Everything is wired up."
             : "Something below needs fixing."}
         </p>
 
@@ -77,19 +97,17 @@ export default async function HealthPage() {
           {checks.map((c) => (
             <li
               key={c.label}
-              className="flex items-start gap-3 border-b border-neutral-800 pb-2"
+              className="flex flex-wrap items-start gap-x-3 gap-y-1 border-b border-neutral-800 pb-2"
             >
               <span
-                className={
-                  c.ok
-                    ? "text-emerald-400 shrink-0 w-4"
-                    : "text-red-400 shrink-0 w-4"
-                }
+                className={`shrink-0 w-4 ${c.ok ? "text-emerald-400" : "text-red-400"}`}
               >
                 {c.ok ? "✓" : "✗"}
               </span>
               <span className="w-52 shrink-0 text-neutral-300">{c.label}</span>
-              <span className={c.ok ? "text-neutral-500" : "text-red-300"}>
+              <span
+                className={`break-all ${c.ok ? "text-neutral-500" : "text-red-300"}`}
+              >
                 {c.detail}
               </span>
             </li>
@@ -97,8 +115,8 @@ export default async function HealthPage() {
         </ul>
 
         <p className="mt-8 text-xs text-neutral-600">
-          Env vars are only read when the dev server starts. After editing
-          .env.local, stop it with Ctrl+C and run npm run dev again.
+          No secrets are printed here — only the project host and the first few
+          characters of the key, which are enough to spot a paste error.
         </p>
       </div>
     </main>
