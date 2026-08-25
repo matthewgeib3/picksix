@@ -50,6 +50,12 @@ export default async function HomePage() {
         </div>
 
         <div className="flex items-center gap-4 text-sm">
+          <Link
+            href="/profile"
+            className="text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
+          >
+            Your Profile
+          </Link>
           {/* Only a commissioner ever sees this link -- and every page behind
               it re-checks on the server, so knowing the URL gets a normal
               member nowhere. */}

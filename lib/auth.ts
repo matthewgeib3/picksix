@@ -6,6 +6,7 @@ export type Member = {
   id: string;
   name: string;
   isAdmin: boolean;
+  avatarUrl: string | null;
 };
 
 /**
@@ -22,13 +23,18 @@ export async function currentMember(): Promise<Member | null> {
 
   const { data, error } = await db()
     .from("members")
-    .select("id, name, is_admin, active")
+    .select("id, name, is_admin, active, avatar_url")
     .eq("id", session.memberId)
     .maybeSingle();
 
   if (error || !data || !data.active) return null;
 
-  return { id: data.id, name: data.name, isAdmin: data.is_admin };
+  return {
+    id: data.id,
+    name: data.name,
+    isAdmin: data.is_admin,
+    avatarUrl: data.avatar_url ?? null,
+  };
 }
 
 export async function requireMember(): Promise<Member> {

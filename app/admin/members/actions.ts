@@ -47,6 +47,26 @@ export async function addMember(formData: FormData) {
   back(undefined, `added:${name}`);
 }
 
+export async function renameMember(formData: FormData) {
+  await requireAdmin();
+
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!id) back("db");
+  if (name.length < 2 || name.length > 24) back("name");
+
+  const { error } = await db().from("members").update({ name }).eq("id", id);
+
+  if (error?.code === "23505") back("taken");
+  if (error) back("db");
+
+  revalidatePath(PAGE);
+  revalidatePath("/grid");
+  revalidatePath("/standings");
+  back(undefined, "renamed");
+}
+
 export async function resetPassword(formData: FormData) {
   await requireAdmin();
 

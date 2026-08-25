@@ -1,12 +1,21 @@
 import { requireAdmin } from "@/lib/auth";
 import AdminNav from "@/components/admin-nav";
+import Avatar from "@/components/avatar";
+import AvatarUpload from "@/components/avatar-upload";
 import { db } from "@/lib/supabase";
-import { addMember, resetPassword, setActive, setAdmin } from "./actions";
+import {
+  addMember,
+  renameMember,
+  resetPassword,
+  setActive,
+  setAdmin,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
 const ERRORS: Record<string, string> = {
-  name: "Display name needs at least two characters.",
+  name: "Display names need to be between two and twenty-four characters.",
+  renamed: "Renamed.",
   username: "Username needs three or more characters — lowercase letters, numbers and underscores only.",
   password: "Password needs at least eight characters.",
   taken: "That username is already in use.",
@@ -20,6 +29,7 @@ type Row = {
   username: string;
   is_admin: boolean;
   active: boolean;
+  avatar_url: string | null;
 };
 
 export default async function MembersPage({
@@ -32,7 +42,7 @@ export default async function MembersPage({
 
   const { data } = await db()
     .from("members")
-    .select("id, name, username, is_admin, active")
+    .select("id, name, username, is_admin, active, avatar_url")
     .order("created_at", { ascending: true });
 
   const members = (data ?? []) as Row[];
@@ -66,24 +76,49 @@ export default async function MembersPage({
               key={m.id}
               className="rounded border border-neutral-800 bg-neutral-900/60 p-4"
             >
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
-                <span className="font-semibold">{m.name}</span>
-                <span className="font-mono text-sm text-neutral-500">
-                  @{m.username}
-                </span>
-                {m.is_admin && (
-                  <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-                    Admin
-                  </span>
-                )}
-                {!m.active && (
-                  <span className="rounded bg-neutral-700/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
-                    Inactive
-                  </span>
-                )}
+              <div className="mb-3 flex items-center gap-3">
+                <Avatar name={m.name} url={m.avatar_url} size={44} />
+
+                <div className="min-w-0 flex-1">
+                  <form
+                    action={renameMember}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <input type="hidden" name="id" value={m.id} />
+                    <input
+                      name="name"
+                      defaultValue={m.name}
+                      required
+                      minLength={2}
+                      maxLength={24}
+                      className="w-40 rounded border border-neutral-800 bg-neutral-950 px-2 py-1.5 font-semibold outline-none focus:border-amber-500"
+                    />
+                    <button className="rounded border border-neutral-700 px-2.5 py-1.5 text-sm text-neutral-300 hover:border-neutral-500 hover:text-neutral-100">
+                      Rename
+                    </button>
+
+                    <span className="font-mono text-sm text-neutral-500">
+                      @{m.username}
+                    </span>
+                    {m.is_admin && (
+                      <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                        Admin
+                      </span>
+                    )}
+                    {!m.active && (
+                      <span className="rounded bg-neutral-700/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                        Inactive
+                      </span>
+                    )}
+                  </form>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                <AvatarUpload
+                  memberId={m.id}
+                  label={m.avatar_url ? "Change photo" : "Add photo"}
+                />
                 <form action={resetPassword} className="flex items-center gap-2">
                   <input type="hidden" name="id" value={m.id} />
                   <input

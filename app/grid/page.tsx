@@ -12,6 +12,7 @@ import {
 import { isRevealed, revealAt, timeLabel, kickoffLabel } from "@/lib/time";
 import { gradeOnView } from "@/lib/grade";
 import AutoRefresh from "@/components/auto-refresh";
+import Avatar from "@/components/avatar";
 import Nav from "@/components/nav";
 
 export const dynamic = "force-dynamic";
@@ -153,7 +154,10 @@ export default async function GridPage({
                     m.id === me.id ? "text-amber-400" : "text-neutral-200"
                   }`}
                 >
-                  {m.name}
+                  <span className="flex items-center gap-2">
+                    <Avatar name={m.name} url={m.avatarUrl} size={26} />
+                    {m.name}
+                  </span>
                 </td>
 
                 {games.map((g) => {

@@ -129,16 +129,28 @@ export async function gamesForWeek(weekId: string): Promise<Game[]> {
   return ((data ?? []) as GameRow[]).map(toGame);
 }
 
-export type LeagueMember = { id: string; name: string };
+export type LeagueMember = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+};
 
 export async function activeMembers(): Promise<LeagueMember[]> {
   const { data } = await db()
     .from("members")
-    .select("id, name")
+    .select("id, name, avatar_url")
     .eq("active", true)
     .order("name", { ascending: true });
 
-  return (data ?? []) as LeagueMember[];
+  return ((data ?? []) as {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  }[]).map((m) => ({
+    id: m.id,
+    name: m.name,
+    avatarUrl: m.avatar_url ?? null,
+  }));
 }
 
 export type PickRow = {

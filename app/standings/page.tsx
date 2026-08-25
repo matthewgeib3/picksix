@@ -4,6 +4,7 @@ import { db } from "@/lib/supabase";
 import { activeMembers } from "@/lib/week";
 import { gradeOnView } from "@/lib/grade";
 import AutoRefresh from "@/components/auto-refresh";
+import Avatar from "@/components/avatar";
 import Nav from "@/components/nav";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ type PickRow = {
 type Line = {
   id: string;
   name: string;
+  avatarUrl: string | null;
   points: number;
   losses: number;
   missed: number;
@@ -72,6 +74,7 @@ export default async function StandingsPage() {
     const line: Line = {
       id: m.id,
       name: m.name,
+      avatarUrl: m.avatarUrl,
       points: 0,
       losses: 0,
       missed: 0,
@@ -177,12 +180,21 @@ export default async function StandingsPage() {
                           line.id === me.id ? "text-amber-400" : ""
                         }`}
                       >
-                        {line.name}
-                        {line.missed > 0 && (
-                          <span className="ml-2 text-xs text-neutral-600">
-                            {line.missed} missed
+                        <span className="flex items-center gap-2">
+                          <Avatar
+                            name={line.name}
+                            url={line.avatarUrl}
+                            size={28}
+                          />
+                          <span>
+                            {line.name}
+                            {line.missed > 0 && (
+                              <span className="ml-2 text-xs text-neutral-600">
+                                {line.missed} missed
+                              </span>
+                            )}
                           </span>
-                        )}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-base font-semibold tabular-nums">
                         {line.points}
