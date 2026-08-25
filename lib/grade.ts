@@ -17,8 +17,35 @@ export type GradeReport = {
   errors: string[];
 };
 
-/** Don't bother asking about a game that started twenty minutes ago. */
-const SETTLE_MINUTES = 150;
+/** Don't bother asking about a game that kicked off twenty minutes ago. */
+const SETTLE_MINUTES = 120;
+
+/**
+ * Floor on how often a page view is allowed to trigger grading.
+ *
+ * Six people with the grid open, each refreshing every minute, would
+ * otherwise hammer an undocumented API with hundreds of requests an hour and
+ * get us rate-limited. This caps it regardless of how many people are
+ * watching, while still catching a final within a couple of minutes.
+ */
+const VIEW_THROTTLE_MS = 45_000;
+let lastViewRun = 0;
+
+/**
+ * Grading triggered by somebody looking at a page. Throttled, and it never
+ * throws -- a bad response from ESPN must not take the leaderboard down.
+ */
+export async function gradeOnView(limit = 8): Promise<void> {
+  const now = Date.now();
+  if (now - lastViewRun < VIEW_THROTTLE_MS) return;
+  lastViewRun = now;
+
+  try {
+    await gradeOpenGames(limit);
+  } catch {
+    /* swallowed on purpose */
+  }
+}
 
 type OpenGame = {
   id: string;

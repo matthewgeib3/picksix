@@ -2,7 +2,9 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { db } from "@/lib/supabase";
 import { activeMembers } from "@/lib/week";
-import { gradeOpenGames } from "@/lib/grade";
+import { gradeOnView } from "@/lib/grade";
+import AutoRefresh from "@/components/auto-refresh";
+import Nav from "@/components/nav";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +37,10 @@ export default async function StandingsPage() {
 
   // Opening the standings is itself a grading trigger. The scheduled job only
   // runs once a day on Vercel's free tier, and this closes the gap: whoever
-  // checks the table first on a Sunday evening pulls the finals in for
-  // everyone. It costs nothing when there's nothing to grade -- the query
-  // that looks for finished-but-ungraded games simply comes back empty.
-  await gradeOpenGames(8);
+  // has the page open pulls finals in for everyone, within a minute or two of
+  // a game ending. Throttled server-side so it doesn't matter how many people
+  // are watching.
+  await gradeOnView(8);
 
   const members = await activeMembers();
 
@@ -123,18 +125,22 @@ export default async function StandingsPage() {
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-5">
       <div className="mx-auto max-w-2xl">
+        <AutoRefresh seconds={60} />
+        <Nav current="standings" />
+
         <div className="mb-6 flex items-baseline justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Standings</h1>
             <p className="text-sm text-neutral-500">
               {graded.length} {graded.length === 1 ? "game" : "games"} graded
+              &middot; updates every minute
             </p>
           </div>
           <Link
             href="/"
             className="text-sm text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
           >
-            Back
+            Home
           </Link>
         </div>
 

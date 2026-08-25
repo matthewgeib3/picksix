@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { currentWeek, gamesForWeek, myPicks, type Game } from "@/lib/week";
 import { kickoffLabel, isLocked, REVEAL_MINUTES } from "@/lib/time";
+import Nav from "@/components/nav";
 import { savePicks } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function PicksPage({
 
   return (
     <Shell title="Make picks" subtitle={week.label}>
-      {flags.saved && <Note tone="good">Picks saved.</Note>}
+      {flags.saved && <SavedPanel />}
       {flags.late && (
         <Note tone="warn">
           Saved what was still open. One or more games had already locked.
@@ -245,6 +246,33 @@ function Side({
   );
 }
 
+function SavedPanel() {
+  const button =
+    "rounded-md border border-emerald-800/70 bg-emerald-950/40 px-3 py-2.5 text-center text-sm font-medium text-emerald-200 hover:border-emerald-600 hover:text-emerald-100";
+
+  return (
+    <div className="mb-5 rounded-lg border border-emerald-800 bg-emerald-950/30 p-4">
+      <p className="font-semibold text-emerald-300">Picks saved.</p>
+      <p className="mt-1 text-sm text-emerald-200/70">
+        Sealed until an hour before each kickoff. Nobody can see them until
+        then &mdash; including you, on the grid.
+      </p>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <Link href="/grid" className={button}>
+          See the grid
+        </Link>
+        <Link href="/standings" className={button}>
+          Standings
+        </Link>
+        <Link href="/picks" className={button}>
+          Change picks
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function Note({
   tone,
   children,
@@ -276,6 +304,8 @@ function Shell({
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-5">
       <div className="mx-auto max-w-lg">
+        <Nav current="picks" />
+
         <div className="mb-6 flex items-baseline justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
@@ -287,7 +317,7 @@ function Shell({
             href="/"
             className="text-sm text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
           >
-            Back
+            Home
           </Link>
         </div>
         {children}

@@ -10,6 +10,9 @@ import {
   type Game,
 } from "@/lib/week";
 import { isRevealed, revealAt, timeLabel, kickoffLabel } from "@/lib/time";
+import { gradeOnView } from "@/lib/grade";
+import AutoRefresh from "@/components/auto-refresh";
+import Nav from "@/components/nav";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +32,11 @@ export default async function GridPage({
 }) {
   const me = await requireMember();
   const { week: weekParam } = await searchParams;
+
+  // Same grading trigger as the standings, throttled the same way. People
+  // watch the grid on Sunday afternoons, so this is where finals usually
+  // land first.
+  await gradeOnView(8);
 
   const week = weekParam ? await weekById(weekParam) : await currentWeek();
   const weeks = await allWeeks();
@@ -210,10 +218,15 @@ function Shell({
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 p-5">
       <div className="mx-auto max-w-5xl">
+        <AutoRefresh seconds={60} />
+        <Nav current="grid" />
+
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">The grid</h1>
-            {title && <p className="text-sm text-neutral-500">{title}</p>}
+            <p className="text-sm text-neutral-500">
+              {title ? `${title} · ` : ""}updates every minute
+            </p>
           </div>
           <div className="flex items-center gap-4">
             {weeks.length > 1 && (
@@ -238,7 +251,7 @@ function Shell({
               href="/"
               className="text-sm text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
             >
-              Back
+              Home
             </Link>
           </div>
         </div>
