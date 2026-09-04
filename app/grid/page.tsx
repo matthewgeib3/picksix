@@ -107,7 +107,7 @@ export default async function GridPage({
       {hiddenCount > 0 && (
         <p className="mb-4 rounded border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-400">
           {hiddenCount} {hiddenCount === 1 ? "game is" : "games are"} still
-          sealed. Each column opens the moment that game kicks off.
+          sealed. Each column opens 30 minutes before that game kicks off.
         </p>
       )}
 

@@ -9,12 +9,12 @@ export const LEAGUE_TZ = "America/New_York";
 /**
  * Minutes before kickoff that a game locks and its picks become visible.
  *
- * Zero means both happen at kickoff. Lock and reveal are driven by this one
- * number on purpose: if they could be set separately, someone would
- * eventually open a window where picks are visible but still editable, and
- * the whole sealed-pick guarantee would quietly stop being true.
+ * Lock and reveal are driven by this one number on purpose: if they could be
+ * set separately, someone would eventually open a window where picks are
+ * visible but still editable, and the whole sealed-pick guarantee would
+ * quietly stop being true.
  */
-export const REVEAL_MINUTES = 0;
+export const REVEAL_MINUTES = 30;
 
 const kickoffFmt = new Intl.DateTimeFormat("en-US", {
   timeZone: LEAGUE_TZ,
@@ -43,7 +43,10 @@ export function revealAt(kickoffIso: string): Date {
   return new Date(new Date(kickoffIso).getTime() - REVEAL_MINUTES * 60_000);
 }
 
-/** A game is locked and open for viewing at the same instant. */
+/**
+ * A game is locked and open for viewing at the same instant -- currently
+ * half an hour before kickoff.
+ */
 export function isRevealed(kickoffIso: string, now: Date = new Date()): boolean {
   return now.getTime() >= revealAt(kickoffIso).getTime();
 }

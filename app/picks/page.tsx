@@ -55,7 +55,7 @@ export default async function PicksPage({
       {missing > 0 ? (
         <Note tone="warn">
           {missing} {missing === 1 ? "game" : "games"} still unpicked. Anything
-          left blank at kickoff scores zero.
+          left blank when a game locks scores zero.
         </Note>
       ) : (
         open.length > 0 && <Note tone="good">All open games are picked.</Note>
@@ -254,7 +254,7 @@ function SavedPanel() {
     <div className="mb-5 rounded-lg border border-emerald-800 bg-emerald-950/30 p-4">
       <p className="font-semibold text-emerald-300">Picks saved.</p>
       <p className="mt-1 text-sm text-emerald-200/70">
-        Sealed until each game kicks off. Nobody can see them until then
+        Sealed until 30 minutes before each kickoff. Nobody can see them until then
         &mdash; including you, on the grid.
       </p>
 
@@ -322,8 +322,8 @@ function Shell({
         </div>
         {children}
         <p className="mt-8 text-center text-xs text-neutral-700">
-          Every game locks at kickoff. That&rsquo;s the same instant everyone
-          else gets to see what you picked.
+          Every game locks 30 minutes before kickoff. That&rsquo;s the same
+          instant everyone else gets to see what you picked.
         </p>
       </div>
     </main>
